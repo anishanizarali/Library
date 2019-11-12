@@ -15,14 +15,13 @@ public class ApiPract : MonoBehaviour
     private string accessToken;
 
     //Urls
-    private string getUrl = "https://library3.samford.edu/iii/sierra-api/v5/bibs";
+    private string getUrl = "https://library3.samford.edu/iii/sierra-api/v5/bibs/";
     private string postUrl = "https://library3.samford.edu/iii/sierra-api/v5/token";
 
     void Start()
     {
         //I think coroutines execute at the same time and wait for yield breakpoints of both methods to be met before continuing
         StartCoroutine(PostToken());
-
         StartCoroutine(GetBooks(getUrl));
     }
 
@@ -42,13 +41,11 @@ public class ApiPract : MonoBehaviour
     {
         using (UnityWebRequest webRequest = UnityWebRequest.Get(url))
         {
-            yield return 1;
-
+            yield return new WaitForSeconds(2);
             webRequest.SetRequestHeader("Authorization", "Bearer " + accessToken);
-            webRequest.SetRequestHeader("fields", "title,author,publishYear");
-            webRequest.SetRequestHeader("text", "Mercury");
+            webRequest.SetRequestHeader("fields", "title");
 
-            webRequest.SendWebRequest();
+            yield return webRequest.SendWebRequest();
 
             string[] books = url.Split('/');
 
@@ -58,20 +55,24 @@ public class ApiPract : MonoBehaviour
             }
             else
             {
+                Debug.Log("Response: ");
                 Debug.Log(webRequest.downloadHandler.text);
-                Debug.Log(webRequest.isHttpError);
+                Debug.Log(webRequest.responseCode);
             }
         }
     }
 
     IEnumerator PostToken()
     {
+        Debug.Log("Post Request");
+
         WWWForm form = new WWWForm();
         form.AddField("grant_type", "client_credentials");
 
         using (UnityWebRequest www = UnityWebRequest.Post(postUrl, form))
         {
             www.SetRequestHeader("Authorization", "Basic b1pxYnQvM2lvTWxSeE5UZ3pmdzdSMit4bUt3UDpsaWJyYXJ5M1ZS");
+            www.SetRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
             yield return www.SendWebRequest();
 
@@ -83,8 +84,9 @@ public class ApiPract : MonoBehaviour
             {
                 string response = www.downloadHandler.text;
                 string[] parameters = response.Split('"');
-
                 accessToken = parameters[3];
+
+                Debug.Log("Token: ");
                 Debug.Log(accessToken);
             }
         }
